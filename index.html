@@ -51,17 +51,25 @@
         <h1>MemBlitz</h1>
         <p class="tagline">Memorize Scripture, one verse at a time</p>
       </header>
+      <!-- Welcome Banner (first-time users) -->
+      <div class="welcome-banner hidden" id="welcome-banner">
+        <p>Ready to test your memory? Tap <strong>Quick Start</strong> or choose a quiz mode below!</p>
+        <button class="welcome-dismiss" id="welcome-dismiss">&times;</button>
+      </div>
+      <!-- Quick Start -->
+      <button class="btn btn-primary quick-start-btn" id="quick-start-btn">Quick Start</button>
       <div class="quiz-mode-selector">
-        <h2 class="quiz-mode-heading">Start Quiz</h2>
+        <h2 class="quiz-mode-heading">Or Choose a Mode</h2>
         <div class="quiz-mode-buttons">
           <button class="quiz-mode-card" id="quiz-favorites-btn">
             <span class="quiz-mode-icon">&#9733;</span>
             <span class="quiz-mode-label">Favorites</span>
             <span class="quiz-mode-count" id="favorites-count">0 verses</span>
+            <span class="quiz-mode-hint hidden" id="favorites-hint">Star verses in Manage Verses to unlock</span>
           </button>
           <button class="quiz-mode-card" id="quiz-random-btn">
             <span class="quiz-mode-icon">&#9776;</span>
-            <span class="quiz-mode-label">Random</span>
+            <span class="quiz-mode-label">All Verses</span>
             <span class="quiz-mode-count" id="random-count">0 verses</span>
           </button>
         </div>
@@ -79,24 +87,33 @@
         <h2 class="quiz-setup-title" id="quiz-setup-title">Favorites Quiz</h2>
         <p class="quiz-setup-available" id="quiz-setup-available">20 verses available</p>
 
-        <!-- Player Count Picker -->
-        <label class="quiz-setup-label">How many players?</label>
-        <div class="player-count-picker">
-          <button class="btn-player-preset active" data-count="1">1</button>
-          <button class="btn-player-preset" data-count="2">2</button>
-          <button class="btn-player-preset" data-count="3">3</button>
-          <button class="btn-player-preset" data-count="4">4</button>
-          <button class="btn-player-preset" data-count="5">5</button>
-          <button class="btn-player-preset" data-count="6">6</button>
-          <button class="btn-player-preset" data-count="7">7</button>
-          <button class="btn-player-preset" data-count="8">8</button>
+        <!-- Multiplayer Toggle -->
+        <div class="multiplayer-toggle-section">
+          <label class="checkbox-label multiplayer-toggle-label">
+            <input type="checkbox" id="multiplayer-toggle">
+            <span>Multiplayer</span>
+          </label>
         </div>
 
-        <!-- Player Names (hidden when 1 player) -->
-        <div class="player-names-section hidden" id="player-names-section">
-          <label class="quiz-setup-label">Player Names</label>
-          <div class="player-names-list" id="player-names-list">
-            <!-- Dynamically rendered inputs -->
+        <!-- Player Count Picker (hidden by default) -->
+        <div class="multiplayer-options hidden" id="multiplayer-options">
+          <label class="quiz-setup-label">How many players?</label>
+          <div class="player-count-picker">
+            <button class="btn-player-preset" data-count="2">2</button>
+            <button class="btn-player-preset" data-count="3">3</button>
+            <button class="btn-player-preset" data-count="4">4</button>
+            <button class="btn-player-preset" data-count="5">5</button>
+            <button class="btn-player-preset" data-count="6">6</button>
+            <button class="btn-player-preset" data-count="7">7</button>
+            <button class="btn-player-preset" data-count="8">8</button>
+          </div>
+
+          <!-- Player Names -->
+          <div class="player-names-section" id="player-names-section">
+            <label class="quiz-setup-label">Player Names</label>
+            <div class="player-names-list" id="player-names-list">
+              <!-- Dynamically rendered inputs -->
+            </div>
           </div>
         </div>
 

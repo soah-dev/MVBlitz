@@ -385,9 +385,11 @@ function setupEventListeners() {
   // Home view — quiz mode buttons
   document.getElementById('quiz-favorites-btn').addEventListener('click', () => openQuizSetup('favorites'));
   document.getElementById('quiz-random-btn').addEventListener('click', () => openQuizSetup('random'));
+  document.getElementById('quick-start-btn').addEventListener('click', quickStart);
   document.getElementById('manage-verses-btn').addEventListener('click', () => showView('manage'));
   document.getElementById('stats-btn').addEventListener('click', () => showStatsView());
   document.getElementById('stats-back-btn').addEventListener('click', () => showView('home'));
+  document.getElementById('welcome-dismiss').addEventListener('click', dismissWelcomeBanner);
 
   // Quiz setup view
   document.getElementById('quiz-setup-back-btn').addEventListener('click', () => showView('home'));
@@ -399,6 +401,9 @@ function setupEventListeners() {
   document.querySelectorAll('.btn-player-preset').forEach(btn => {
     btn.addEventListener('click', onPlayerPresetClick);
   });
+
+  // Multiplayer toggle
+  document.getElementById('multiplayer-toggle').addEventListener('change', onMultiplayerToggle);
 
   // Timer setup
   document.getElementById('timer-toggle').addEventListener('change', (e) => {
@@ -516,18 +521,107 @@ async function updateVerseCount() {
   document.getElementById('favorites-count').textContent =
     favCount === 1 ? '1 verse' : `${favCount} verses`;
 
-  // Disable favorites button when 0 favorites
+  // Disable favorites button when 0 favorites and show hint
   const favBtn = document.getElementById('quiz-favorites-btn');
+  const favHint = document.getElementById('favorites-hint');
   if (favCount === 0) {
     favBtn.classList.add('disabled');
+    favHint.classList.remove('hidden');
   } else {
     favBtn.classList.remove('disabled');
+    favHint.classList.add('hidden');
+  }
+
+  // Show welcome banner for first-time users
+  if (totalCount > 0 && !localStorage.getItem('welcomeDismissed')) {
+    document.getElementById('welcome-banner').classList.remove('hidden');
   }
 }
 
 // Format verse reference for display
 function formatReference(ref) {
   return `${ref.book} ${ref.chapter}:${ref.verse}`;
+}
+
+// Dismiss welcome banner
+function dismissWelcomeBanner() {
+  document.getElementById('welcome-banner').classList.add('hidden');
+  localStorage.setItem('welcomeDismissed', 'true');
+}
+
+// Quick Start: random mode, 5 verses, 1 player, no timer
+async function quickStart() {
+  dismissWelcomeBanner();
+  const verses = await getVerses();
+  if (verses.length === 0) {
+    alert('No verses available. Please add some verses first.');
+    showView('manage');
+    return;
+  }
+
+  const count = Math.min(5, verses.length);
+  const shuffled = shuffleArray([...verses]);
+
+  quizState.verses = shuffled.slice(0, count);
+  quizState.currentIndex = 0;
+  quizState.score = 0;
+  quizState.versesAnswered = 0;
+  quizState.lastMode = 'random';
+  quizState.isMultiplayer = false;
+  quizState.players = [];
+  quizState.timerEnabled = false;
+
+  showView('quiz');
+  updateScoreDisplay();
+  displayCurrentVerse();
+}
+
+// Handle multiplayer toggle
+function onMultiplayerToggle(e) {
+  const isMultiplayer = e.target.checked;
+  const optionsEl = document.getElementById('multiplayer-options');
+
+  if (isMultiplayer) {
+    optionsEl.classList.remove('hidden');
+    // Default to 2 players
+    quizSetupState.playerCount = 2;
+    document.querySelectorAll('.btn-player-preset').forEach(b => b.classList.remove('active'));
+    const btn2 = document.querySelector('.btn-player-preset[data-count="2"]');
+    if (btn2) btn2.classList.add('active');
+    renderPlayerNameInputs(2);
+    document.getElementById('verse-count-label').textContent = 'How many verses per player?';
+    updateVerseCountConstraints();
+  } else {
+    optionsEl.classList.add('hidden');
+    quizSetupState.playerCount = 1;
+    quizSetupState.playerNames = [];
+    document.getElementById('verse-count-label').textContent = 'How many verses?';
+    // Reset slider max to full total
+    const total = quizSetupState.availableVerses.length;
+    const slider = document.getElementById('quiz-verse-count');
+    slider.max = total;
+    if (quizSetupState.selectedCount > total) {
+      quizSetupState.selectedCount = Math.min(5, total);
+      slider.value = quizSetupState.selectedCount;
+    }
+    updateVerseCountDisplay(quizSetupState.selectedCount, total);
+    document.getElementById('quiz-setup-note').classList.add('hidden');
+    document.getElementById('quiz-start-btn').disabled = false;
+
+    // Update preset buttons for full range
+    document.querySelectorAll('.quiz-verse-count-picker .btn-count-preset').forEach(btn => {
+      const val = btn.dataset.count;
+      if (val === 'all') {
+        btn.classList.toggle('disabled-preset', false);
+      } else {
+        btn.classList.toggle('disabled-preset', parseInt(val) > total);
+      }
+      btn.classList.toggle('active',
+        (val === 'all' && quizSetupState.selectedCount === total) ||
+        (val !== 'all' && parseInt(val) === quizSetupState.selectedCount)
+      );
+    });
+  }
 }
 
 // ===== QUIZ FUNCTIONS =====
@@ -565,12 +659,12 @@ async function openQuizSetup(mode) {
   quizSetupState.mode = mode;
   quizSetupState.availableVerses = verses;
 
-  // Reset player count to 1
+  // Reset multiplayer to off
   quizSetupState.playerCount = 1;
   quizSetupState.playerNames = [];
+  document.getElementById('multiplayer-toggle').checked = false;
+  document.getElementById('multiplayer-options').classList.add('hidden');
   document.querySelectorAll('.btn-player-preset').forEach(b => b.classList.remove('active'));
-  document.querySelector('.btn-player-preset[data-count="1"]').classList.add('active');
-  document.getElementById('player-names-section').classList.add('hidden');
   document.getElementById('verse-count-label').textContent = 'How many verses?';
   document.getElementById('quiz-setup-note').classList.add('hidden');
   document.getElementById('quiz-start-btn').disabled = false;
@@ -587,7 +681,7 @@ async function openQuizSetup(mode) {
   // Update setup UI
   const total = verses.length;
   document.getElementById('quiz-setup-title').textContent =
-    mode === 'favorites' ? 'Favorites Quiz' : 'Random Quiz';
+    mode === 'favorites' ? 'Favorites Quiz' : 'All Verses Quiz';
   document.getElementById('quiz-setup-available').textContent =
     `${total} verse${total === 1 ? '' : 's'} available`;
 
