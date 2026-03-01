@@ -1154,7 +1154,7 @@ function showQuizComplete(endedEarly = false) {
     const row = document.createElement('div');
     row.className = `mp-score-row ${medalClass}`;
     row.innerHTML = `
-      <span class="mp-rank">${index < 3 ? medalSymbols[index] : rank + 'th'}</span>
+      ${quizState.isMultiplayer ? `<span class="mp-rank">${index < 3 ? medalSymbols[index] : rank + 'th'}</span>` : ''}
       <span class="mp-player-name">${player.name}</span>
       <span class="mp-player-stats">${player.score}/${player.versesAnswered} (${pct}%)</span>
     `;
